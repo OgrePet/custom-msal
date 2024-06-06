@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ // Copyright (c) Microsoft Corporation.
+  ~ // All rights reserved.
+  ~ //
+  ~ // This code is licensed under the MIT License.
+  ~ //
+  ~ // Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ // of this software and associated documentation files(the "Software"), to deal
+  ~ // in the Software without restriction, including without limitation the rights
+  ~ // to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+  ~ // copies of the Software, and to permit persons to whom the Software is
+  ~ // furnished to do so, subject to the following conditions :
+  ~ //
+  ~ // The above copyright notice and this permission notice shall be included in
+  ~ // all copies or substantial portions of the Software.
+  ~ //
+  ~ // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~ // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~ // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~ // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~ // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  ~ // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  ~ // THE SOFTWARE.
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.microsoft.identity.client.testapp"
+          xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
+
+
+    <application
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:name="com.microsoft.identity.client.testapp.MsalSampleApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme"
+        android:resizeableActivity="true">
+        <!-- taskAffinity is set equal to empty string.  This translated to "null" taskAffinity at runtime.
+            null task affinity may be used when creating multi-window apps-->
+        <!-- https://developer.android.com/guide/topics/manifest/activity-element#aff -->
+        <activity
+            android:name="com.microsoft.identity.client.testapp.StartActivity"
+            android:taskAffinity=""
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="stateHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.microsoft.identity.client.testapp.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:taskAffinity=""
+            android:documentLaunchMode="always"
+            android:configChanges="keyboardHidden|keyboard">
+        </activity>
+
+        <activity
+            android:name="com.microsoft.identity.client.BrowserTabActivity"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- To Test PPE:  msal7cc2dd84-bb0f-4711-8fca-4c7d01249f56 -->
+                <!-- To Test Sovereign: msalcb7faed4-b8c0-49ee-b421-f5ed16894c83 -->
+                <data android:scheme="msauth"
+                    android:host="${applicationId}"
+                    android:path="/1wIqXSqBj7w+h11ZifsnqwgyKrY="/>
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

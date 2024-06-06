@@ -1,0 +1,201 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+def msalVersion = "4.+"
+
+if (project.hasProperty("distMsalVersion")) {
+    msalVersion = distMsalVersion
+}
+
+android {
+
+    packagingOptions {
+        pickFirst  'META-INF/common4j.kotlin_module'
+    }
+
+    compileOptions {
+        // Flag to enable support for the new language APIs
+        coreLibraryDesugaringEnabled true
+        // Sets Java compatibility to Java 8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    final String BROKER_HOST = "BrokerHost"
+    final String BROKER_MICROSOFT_AUTHENTICATOR = "BrokerMicrosoftAuthenticator"
+    final String BROKER_COMPANY_PORTAL = "BrokerCompanyPortal"
+    final String BROKER_LTW = "BrokerLTW"
+    final String AUTO_BROKER = "AutoBroker"
+    final String SELECTED_BROKER = "SELECTED_BROKER"
+
+    signingConfigs {
+        debug {
+            storeFile file("./debug.keystore")
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        release {
+            storeFile file("./debug.keystore")
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        multiDexEnabled true
+        applicationId "com.msft.identity.client.sample"
+        minSdkVersion rootProject.ext.automationAppMinSDKVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // The following argument makes the Android Test Orchestrator run its
+        // "pm clear" command after each test invocation. This command ensures
+        // that the app's state is completely cleared between tests.
+        testInstrumentationRunnerArguments clearPackageData: 'true'
+
+        // constants
+        buildConfigField("String", BROKER_MICROSOFT_AUTHENTICATOR, "\"$BROKER_MICROSOFT_AUTHENTICATOR\"")
+        buildConfigField("String", BROKER_COMPANY_PORTAL, "\"$BROKER_COMPANY_PORTAL\"")
+        buildConfigField("String", BROKER_LTW, "\"$BROKER_LTW\"")
+        buildConfigField("String", BROKER_HOST, "\"$BROKER_HOST\"")
+        buildConfigField("String", AUTO_BROKER, "\"$AUTO_BROKER\"")
+    }
+
+    testOptions {
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
+        animationsDisabled = true
+    }
+
+    buildTypes {
+        release {
+            debuggable true
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+
+        debug {
+            // testCoverageEnabled flag is set to true to get coverage reports for Android Tests
+            testCoverageEnabled false
+            multiDexKeepProguard file('proguard-multidex-rules.pro')
+        }
+    }
+
+    testBuildType = "debug"
+
+    lintOptions {
+        abortOnError false
+    }
+
+    flavorDimensions "main", "broker"
+
+    productFlavors {
+        local {
+            dimension "main"
+            applicationIdSuffix ".local"
+            versionNameSuffix "-local"
+            resValue("string", "application_name", "msal-local")
+        }
+        dist {
+            dimension "main"
+            // Keep .local because the redirect url we registered on the portal contains .local, not .dist
+            applicationIdSuffix ".local"
+            versionNameSuffix "-dist"
+            resValue("string", "application_name", "msal-dist")
+        }
+
+        BrokerMicrosoftAuthenticator {
+            dimension "broker"
+            buildConfigField("String", SELECTED_BROKER, "\"$BROKER_MICROSOFT_AUTHENTICATOR\"")
+        }
+
+        BrokerCompanyPortal {
+            dimension "broker"
+            buildConfigField("String", SELECTED_BROKER, "\"$BROKER_COMPANY_PORTAL\"")
+        }
+
+        BrokerLTW {
+            dimension "broker"
+            buildConfigField("String", SELECTED_BROKER, "\"$BROKER_LTW\"")
+        }
+
+        BrokerHost {
+            dimension "broker"
+            buildConfigField("String", SELECTED_BROKER, "\"$BROKER_HOST\"")
+        }
+
+        AutoBroker {
+            dimension "broker"
+            buildConfigField("String", SELECTED_BROKER, "\"$AUTO_BROKER\"")
+        }
+    }
+
+    variantFilter { variant ->
+        def flavorName = variant.flavors*.name
+        def buildType = variant.buildType.name
+        // To check for a certain build type, use variant.buildType.name == "<buildType>"
+        if (buildType.contains("release")) {
+            // Gradle ignores any variants that satisfy the conditions above.
+            setIgnore(true)
+        }
+
+        if (flavorName.contains("dist") && flavorName.contains("BrokerHost")) {
+            // Gradle ignores any variants that satisfy the conditions above.
+            setIgnore(true)
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            java.srcDirs = ['src/main/java', 'src/main/kotlin']
+        }
+
+        androidTest {
+            manifest.srcFile 'src/androidTest/AndroidManifest.xml'
+            res.srcDirs = ['src/main/res', 'src/main/kotlin']
+        }
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:$rootProject.ext.coreLibraryDesugaringVersion"
+
+    // Compile Dependency
+    localImplementation project(':msal')
+    distImplementation "com.microsoft.identity.client:msal:${msalVersion}"
+    implementation "androidx.constraintlayout:constraintlayout:$rootProject.ext.constraintLayoutVersion"
+    implementation "com.google.code.gson:gson:$rootProject.ext.gsonVersion"
+    implementation "androidx.appcompat:appcompat:$rootProject.ext.appCompatVersion"
+    implementation 'junit:junit:4.13'
+    implementation "androidx.legacy:legacy-support-v4:$rootProject.ext.legacySupportV4Version"
+    implementation "com.google.android.material:material:$rootProject.ext.materialVersion"
+    androidTestImplementation "androidx.test:core:$rootProject.ext.androidxTestCoreVersion"
+    androidTestImplementation "androidx.test.ext:junit:$rootProject.ext.androidxJunitVersion"
+    // Set this dependency to use JUnit 4 rules
+    androidTestImplementation "androidx.test:rules:$rootProject.rulesVersion"
+    androidTestImplementation "androidx.test.uiautomator:uiautomator:$rootProject.ext.uiAutomatorVersion"
+    compileOnly "org.projectlombok:lombok:$rootProject.ext.lombokVersion"
+    annotationProcessor "org.projectlombok:lombok:$rootProject.ext.lombokVersion"
+
+    implementation(project(":LabApiUtilities"))
+    implementation(project(":uiautomationutilities")) {
+        exclude module: 'common'
+        exclude module: 'appcompat'
+    }
+    androidTestImplementation "androidx.test:runner:$rootProject.ext.androidxTestRunnerVersion"
+    androidTestUtil "androidx.test:orchestrator:$rootProject.ext.androidxTestOrchestratorVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+}
+
